@@ -1,0 +1,11 @@
+codomain_dims: [3]
+hidden_size: 100
+no_layers: 5
+activ_func: relu
+final_non_linearity: sigmoid
+omega0: 1.0
+omega0_initial: 0.1
+kwargs:
+  coordinates_center: False
+  coordinates_whiten: False
+  coordinates_flatten: False

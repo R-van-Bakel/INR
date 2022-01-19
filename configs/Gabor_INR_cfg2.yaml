@@ -1,0 +1,25 @@
+net:
+  codomain_dims: [3]
+  hidden_channels: 15
+  no_layers: 5
+  input_scale: 256.0
+  weight_scale: 0.1
+  alpha: 1.0 # 6.0
+  beta: 100.0 # 1.0
+  bias: True
+  init_spatial_value: 1.0
+  covariance: anisotropic
+  final_non_linearity: sigmoid
+train:
+  lr: 0.01
+regularize_params:
+  res: 32 # 0
+  factor: 1.00 # 0.001
+  gauss_stddevs: 2.0 # 2.0
+  gauss_factor: 0.01 # 0.5
+  target: gabor
+  method: summed
+kwargs:
+  coordinates_center: False
+  coordinates_whiten: False
+  coordinates_flatten: False
