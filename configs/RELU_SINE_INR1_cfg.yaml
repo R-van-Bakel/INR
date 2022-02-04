@@ -1,11 +1,7 @@
-codomain_dims: [3]
+codomain: [3]
 hidden_size: 13
 no_layers: 5
 activ_func: sine
 final_non_linearity: sigmoid
 omega0: 1.0
 omega0_initial: 0.02
-kwargs:
-  coordinates_center: False
-  coordinates_whiten: False
-  coordinates_flatten: False

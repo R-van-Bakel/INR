@@ -12,15 +12,20 @@ from GaborClass import GaborClass
 
 
 class Gabor_INRClass(INRBaseClass):
-    def __init__(self, train_coordinates, codomain_dims, hidden_channels, no_layers, input_scale,
+    def __init__(self, codomain, hidden_channels, no_layers, input_scale,
                  weight_scale, alpha, beta, bias, init_spatial_value, covariance="anisotropic",
                  final_non_linearity="identity", res=32, factor=1.00, target="gabor", method="summed",
-                 gauss_stddevs=2.0, gauss_factor=0.01, **kwargs):
-        model = GaborClass(dim_linear=train_coordinates.size()[-1], hidden_channels=hidden_channels,
-                           out_channels=torch.prod(torch.LongTensor(codomain_dims)).item(), no_layers=no_layers,
+                 gauss_stddevs=2.0, gauss_factor=0.01, train_coordinates=None, dim_linear=None):
+        super().__init__(codomain, train_coordinates)
+        if train_coordinates is not None:
+            dim_linear = train_coordinates.size()[-1]
+        elif dim_linear is None:
+            raise TypeError("Since train_coordinates is not specified dim_linear has to be provided.")
+        model = GaborClass(dim_linear=dim_linear, hidden_channels=hidden_channels,
+                           out_channels=torch.prod(torch.LongTensor(codomain)).item(), no_layers=no_layers,
                            covariance=covariance, input_scale=input_scale, weight_scale=weight_scale, alpha=alpha,
                            beta=beta, bias=bias, init_spatial_value=init_spatial_value)
-        super().__init__(train_coordinates, codomain_dims, model, **kwargs)
+        self.model = model
         self.res = res
         self.factor = factor
         self.target = target
@@ -34,18 +39,20 @@ class Gabor_INRClass(INRBaseClass):
 
     def forward(self, coordinates=None):
         if coordinates is None:
-            coordinates = self.train_coordinates
+            coordinates = self.get_train_coordinates()
         y = super().forward(coordinates)
         y = self.non_linearity(y)
         return y
 
-    def fit(self, image, optimizer, criterion, scheduler, epochs, regularize=True):
+    def fit(self, image, optimizer, criterion, scheduler, epochs, train_coordinates=None, regularize=True):
+        if train_coordinates is None:
+            train_coordinates = self.get_train_coordinates()
         self.train()
         losses = []
         for epoch in epochs:
             for j in range(epoch):
                 optimizer.zero_grad()
-                out = self()
+                out = self(train_coordinates)
                 loss = criterion(out, image)
                 if regularize:
                     loss += regularize_gabornet(gabor_net=self.model,

@@ -1,5 +1,5 @@
 net:
-  codomain_dims: [3]
+  codomain: [3]
   hidden_channels: 15
   no_layers: 5
   input_scale: 256.0
@@ -19,7 +19,3 @@ regularize_params:
   gauss_factor: 0.01 # 0.5
   target: gabor
   method: summed
-kwargs:
-  coordinates_center: False
-  coordinates_whiten: False
-  coordinates_flatten: False
