@@ -56,7 +56,7 @@ class MFNBase(nn.Module):
         return out
 
 
-class GaborClass(MFNBase):
+class GaborModel(MFNBase):
     def __init__(
             self,
             dim_linear: int,
@@ -70,6 +70,7 @@ class GaborClass(MFNBase):
             beta: float = 1.0,
             bias: bool = True,
             init_spatial_value: float = 1.0,
+            final_non_linearity: str = "identity",
     ):
         super().__init__(
             hidden_channels,
@@ -92,6 +93,16 @@ class GaborClass(MFNBase):
                 for layer in range(no_layers + 1)
             ]
         )
+        if final_non_linearity == "identity":
+            self.non_linearity = nn.Identity()
+        elif final_non_linearity == "sigmoid":
+            self.non_linearity = nn.Sigmoid()
+
+    def forward(self, x):
+        x = super().forward(x)
+        x = self.non_linearity(x)
+        return x
+
 
 
 class GaborLayer(nn.Module):

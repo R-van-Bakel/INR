@@ -1,3 +1,4 @@
+domain: 2
 codomain: [3]
 hidden_size: 100
 no_layers: 5

@@ -1,8 +1,14 @@
-# HD_INRs (working title)
+# INR
 Implicit neural representations capable of upsampling image pixels.  
 See `HD_INR_env.yml` for the required anaconda setup. The code was made and tested on a Windows 10 machine.
 
 In this repository you will find multiple implementations for implicit neural representations (INRs).
+
+## Classes
+This repository contains three different types of classes. Firstly we have `INRBaseClass` which defines a wrapper base class.
+This class adds a fitting method and provides the base setup for any INR. A subclass is expected to define a specific model.  
+Secondly, we have `MLP` and `Gabor`. These classes define an MLP and Gabor INR and inherit from `INRBaseClass`.  
+Finally, we have `MLModel` and `GaborModel`. These classes are used to create the models that the aforementioned INR classes use.
 
 ## Parameters
 ### Parameter files

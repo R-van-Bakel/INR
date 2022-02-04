@@ -3,7 +3,7 @@ from torch import nn
 import numpy as np
 
 
-class MLPClass(nn.Module):
+class MLPModel(nn.Module):
     def __init__(self, domain_size=2, codomain_size=3, hidden_size=15, no_layers=5, activ_func="relu",
                  final_non_linearity="identity", omega0=30.0, omega0_initial=1.0):
         super().__init__()

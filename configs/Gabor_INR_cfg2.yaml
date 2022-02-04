@@ -1,4 +1,5 @@
 net:
+  domain: 2
   codomain: [3]
   hidden_channels: 15
   no_layers: 5
@@ -13,7 +14,7 @@ net:
 train:
   lr: 0.01
 regularize_params:
-  res: 32 # 0
+  kernel_size: 32 # 0
   factor: 1.00 # 0.001
   gauss_stddevs: 2.0 # 2.0
   gauss_factor: 0.01 # 0.5
