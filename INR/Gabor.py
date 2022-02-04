@@ -5,7 +5,7 @@ if not "./flexconv" in sys.path:
 
 import torch
 
-from .gabor_antialiasing import regularize_gabornet
+from .utils.gabor_antialiasing import regularize_gabornet
 from .INRBaseClass import INRBaseClass
 from .GaborModel import GaborModel
 
