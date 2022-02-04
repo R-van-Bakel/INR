@@ -2,7 +2,7 @@
 Implicit neural representations capable of upsampling image pixels.  
 See `HD_INR_env.yml` for the required anaconda setup. The code was made and tested on a Windows 10 machine.
 
-In this repository you will find multiple implementations for implicit neural representations (INRs).
+In this repository you will find multiple implementations for implicit neural representations (INRs). The INR folder contains the actual library.
 
 ## Classes
 This repository contains three different types of classes. Firstly we have `INRBaseClass` which defines a wrapper base class.
