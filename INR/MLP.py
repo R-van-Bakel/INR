@@ -1,5 +1,5 @@
-from INRBaseClass import INRBaseClass
-from MLPModel import MLPModel
+from .INRBaseClass import INRBaseClass
+from .MLPModel import MLPModel
 
 
 class MLP(INRBaseClass):

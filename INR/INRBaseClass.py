@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from helper_functions import coordinate_grid
+from .utils.helper_functions import coordinate_grid
 
 
 class INRBaseClass(nn.Module):
