@@ -1,7 +1,6 @@
 domain: 2
 codomain: [3]
-hidden_size: 13
-no_layers: 5
+hidden_size: [13,13,13,13,13]
 activ_func: sine
 final_non_linearity: sigmoid
 omega0: 1.0

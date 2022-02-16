@@ -1,0 +1,3 @@
+domain: 2
+codomain: [3]
+hidden_features: [30,30,30,30,30]

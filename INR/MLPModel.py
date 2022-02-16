@@ -4,22 +4,22 @@ import numpy as np
 
 
 class MLPModel(nn.Module):
-    def __init__(self, domain_size=2, codomain_size=3, hidden_size=15, no_layers=5, activ_func="relu",
+    def __init__(self, domain, codomain, hidden_size, activ_func="relu",
                  final_non_linearity="identity", omega0=30.0, omega0_initial=1.0):
         super().__init__()
         self.omega0 = omega0
         self.omega0_initial = omega0_initial
 
-        if no_layers == 1:
-            self.lin_layers = nn.ModuleList([torch.nn.Linear(domain_size, codomain_size)])
+        if not hidden_size:
+            self.lin_layers = nn.ModuleList([torch.nn.Linear(domain, codomain)])
         else:
             self.lin_layers = nn.ModuleList(
-                [nn.Linear(domain_size, hidden_size)] +
+                [nn.Linear(domain, hidden_size[0])] +
                 [
-                    nn.Linear(hidden_size, hidden_size)
-                    for layer in range(no_layers - 2)
+                    nn.Linear(hidden_features, hidden_features)
+                    for hidden_features in hidden_size[1:-2]
                 ]
-                + [nn.Linear(hidden_size, codomain_size)]
+                + [nn.Linear(hidden_size[-1], codomain)]
             )
 
         if activ_func == "relu":
@@ -27,14 +27,17 @@ class MLPModel(nn.Module):
         elif activ_func == "sine":
             self.non_linearty = torch.sin
             with torch.no_grad():
-                nn.init.uniform_(self.lin_layers[0].weight, -np.sqrt(1 / domain_size) / omega0_initial,
-                                 np.sqrt(1 / domain_size) / omega0_initial)
-                nn.init.uniform_(self.lin_layers[0].bias, -np.sqrt(1 / domain_size) / omega0_initial,
-                                 np.sqrt(1 / domain_size) / omega0_initial)
-                for layer in self.lin_layers[1:]:
-                    nn.init.uniform_(layer.weight, -np.sqrt(6 / hidden_size) / omega0,
-                                     np.sqrt(6 / hidden_size) / omega0)
-                    nn.init.uniform_(layer.bias, -np.sqrt(6 / hidden_size) / omega0, np.sqrt(6 / hidden_size) / omega0)
+                nn.init.uniform_(self.lin_layers[0].weight, -np.sqrt(1 / domain) / omega0_initial,
+                                 np.sqrt(1 / domain) / omega0_initial)
+                nn.init.uniform_(self.lin_layers[0].bias, -np.sqrt(1 / domain) / omega0_initial,
+                                 np.sqrt(1 / domain) / omega0_initial)
+                for i in range(len(self.lin_layers[1:])):
+                    layer = self.lin_layers[i+1]
+                    hidden_features = hidden_size[i]
+                    print(hidden_features)
+                    nn.init.uniform_(layer.weight, -np.sqrt(6 / hidden_features) / omega0,
+                                     np.sqrt(6 / hidden_features) / omega0)
+                    nn.init.uniform_(layer.bias, -np.sqrt(6 / hidden_features) / omega0, np.sqrt(6 / hidden_features) / omega0)
 
         if final_non_linearity == "identity":
             self.final_non_linearity = nn.Identity()
