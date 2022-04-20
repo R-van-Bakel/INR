@@ -1,6 +1,7 @@
 domain: 2
 codomain: [3]
-hidden_size: [13,13,13,13,13]
+hidden_size: [30,30,30,30,30]
+batch_size: 5
 activ_func: sine
 final_non_linearity: sigmoid
 omega0: 1.0

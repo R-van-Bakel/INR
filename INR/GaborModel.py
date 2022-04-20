@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import numpy as np
+from .utils import EinsumLinear
 
 
 # A slightly altered version of the Gabor model in https://github.com/rjbruin/flexconv/blob/master/ckconv/nn/kernelnet.py
@@ -21,21 +22,23 @@ class MFNBase(nn.Module):
             no_layers: int,
             weight_scale: float,
             bias: bool,
+            batch_size: int = None,
     ):
         super().__init__()
 
         self.linear = nn.ModuleList(
             [
-                nn.Linear(
+                EinsumLinear(
                     hidden_channels,
                     hidden_channels,
-                    bias=bias,
+                    batch_size=batch_size,
+                    bias=bias
                 )
                 for _ in range(no_layers)
             ]
         )
-        self.output_linear = nn.Linear(
-            hidden_channels, out_channels, bias=bias
+        self.output_linear = EinsumLinear(
+            hidden_channels, out_channels, batch_size=batch_size
         )
 
         for lin in self.linear:
@@ -71,6 +74,7 @@ class GaborModel(MFNBase):
             bias: bool = True,
             init_spatial_value: float = 1.0,
             final_non_linearity: str = "identity",
+            batch_size: int = None,
     ):
         super().__init__(
             hidden_channels,
@@ -78,6 +82,7 @@ class GaborModel(MFNBase):
             no_layers,
             weight_scale,
             bias,
+            batch_size,
         )
         self.filters = nn.ModuleList(
             [
@@ -89,6 +94,7 @@ class GaborModel(MFNBase):
                     beta,
                     init_spatial_value,
                     covariance,
+                    batch_size,
                 )
                 for layer in range(no_layers + 1)
             ]
@@ -120,29 +126,25 @@ class GaborLayer(nn.Module):
             beta: float,
             init_spatial_value: float,
             covariance: bool,
+            batch_size: int = 1,
     ):
         super().__init__()
-        self.linear = nn.Linear(dim_linear, hidden_channels, bias=True)
-        mu = init_spatial_value * (2 * torch.rand(hidden_channels, dim_linear) - 1)
+        self.batch_size = batch_size
+        self.linear = EinsumLinear(dim_linear, hidden_channels, batch_size=batch_size)
+        mu = init_spatial_value * (2 * torch.rand(batch_size, hidden_channels, dim_linear) - 1)
         self.mu = nn.Parameter(mu)
         if covariance == "isotropic":
             self.gamma = nn.Parameter(
                 torch.distributions.gamma.Gamma(alpha, beta).sample(
-                    (hidden_channels, 1)
+                    (batch_size, hidden_channels, 1)
                 )
             )
         elif covariance == "anisotropic":
             self.gamma = nn.Parameter(
                 torch.distributions.gamma.Gamma(alpha, beta).sample(
-                    (hidden_channels, dim_linear)
+                    (batch_size, hidden_channels, dim_linear)
                 )
             )
-        # elif covariance == "full":
-        #     self.gamma = nn.Parameter(
-        #         torch.distributions.gamma.Gamma(alpha, beta).sample(
-        #             (hidden_channels, hidden_channels, dim_linear)
-        #         )
-        #     )
         self.input_scale = input_scale
         self.linear.weight.data *= input_scale * self.gamma
         self.linear.bias.data.uniform_(-np.pi, np.pi)
@@ -159,7 +161,7 @@ class GaborLayer(nn.Module):
         return
 
     def forward(self, x):
-        n_domain_dims = len(x.size()) - 1
+        n_domain_dims = len(x.size()) - 2
         domain_dims = [1] * n_domain_dims
         # if self.steerable:
         #     gauss_window = rotated_gaussian_window(
@@ -171,15 +173,15 @@ class GaborLayer(nn.Module):
         # else:
         gauss_window = gaussian_window(
             x,
-            self.gamma.view(*domain_dims, *self.gamma.shape),
-            self.mu.view(*domain_dims, *self.mu.shape),
+            self.gamma.view(self.batch_size, *domain_dims, *self.gamma.shape[1:]),
+            self.mu.view(self.batch_size, *domain_dims, *self.mu.shape[1:])
         )
         return gauss_window * torch.sin(self.linear(x))
 
 
 def gaussian_window(x, gamma, mu):
-    n_domain_dims = len(x.size()) - 1
-    return torch.exp(-0.5 * ((gamma * (x.unsqueeze(n_domain_dims) - mu)) ** 2).sum(n_domain_dims + 1))
+    n_domain_dims = len(x.size()) - 2
+    return torch.exp(-0.5 * ((gamma * (x.unsqueeze(n_domain_dims + 1) - mu)) ** 2).sum(n_domain_dims + 2))
 
 
 # def rotation_matrix(theta):

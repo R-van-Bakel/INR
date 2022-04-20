@@ -11,10 +11,11 @@ from .GaborModel import GaborModel
 
 
 class Gabor(INRBaseClass):
-    def __init__(self, domain, codomain, size=None, **model_kwargs):
+    def __init__(self, domain, codomain, batch_size=None, size=None, **model_kwargs):
         super().__init__(domain, codomain, size)
+        self.batch_size = batch_size
         model = GaborModel(dim_linear=self.domain_dim, out_channels=torch.prod(torch.LongTensor(codomain)).item(),
-                           **model_kwargs)
+                           batch_size=batch_size, **model_kwargs)
         self.model = model
 
     def forward(self, coordinates=None):

@@ -4,8 +4,10 @@ from .utils.helper_functions import coordinate_grid
 
 
 class INRBaseClass(nn.Module):
-    def __init__(self, domain, codomain, size=None):
+    def __init__(self, domain, codomain, batch_size=None, size=None):
         super().__init__()
+
+        self.batch_size = batch_size
 
         if isinstance(domain, int):
             self.domain = None
@@ -45,7 +47,10 @@ class INRBaseClass(nn.Module):
         if coordinates is None:
             coordinates = self.get_train_coordinates()
         y = self.model(coordinates)
-        y = y.reshape(*coordinates.size()[:-1], *self.codomain)
+        if self.batch_size is None:
+            y = y.reshape(*coordinates.size()[:-1], *self.codomain)
+        else:
+            y = y.reshape(self.batch_size, *coordinates.size()[1:-1], *self.codomain)
         return y
 
     def fit(self, image, optimizer, criterion, scheduler, epoch_size, no_epochs, image_grid=None):

@@ -1,14 +1,15 @@
 net:
   domain: 2
   codomain: [3]
-  hidden_channels: 15
-  no_layers: 5
-  input_scale: 256.0
-  weight_scale: 0.1
+  hidden_channels: 20
+  batch_size: 5
+  no_layers: 3
+  input_scale: 160.0 # 256.0
+  weight_scale: 0.01 # 0.1
   alpha: 1.0 # 6.0
-  beta: 100.0 # 1.0
+  beta: 25.6 # 1.0
   bias: True
-  init_spatial_value: 1.0
+  init_spatial_value: 1.0 # 1.0
   covariance: anisotropic
   final_non_linearity: sigmoid
 train:

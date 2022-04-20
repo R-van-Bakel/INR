@@ -1,6 +1,7 @@
 domain: 2
 codomain: [3]
 hidden_size: [100,100,100,100,100]
+batch_size: 5
 activ_func: relu
 final_non_linearity: sigmoid
 omega0: 1.0

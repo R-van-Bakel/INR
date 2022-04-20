@@ -1,25 +1,25 @@
 import torch
 from torch import nn
 import numpy as np
+from .utils import EinsumLinear
 
 
 class MLPModel(nn.Module):
-    def __init__(self, domain, codomain, hidden_size, activ_func="relu",
+    def __init__(self, domain, codomain, hidden_size, batch_size=None, activ_func="relu",
                  final_non_linearity="identity", omega0=30.0, omega0_initial=1.0):
         super().__init__()
         self.omega0 = omega0
         self.omega0_initial = omega0_initial
-
         if not hidden_size:
-            self.lin_layers = nn.ModuleList([torch.nn.Linear(domain, codomain)])
+            self.lin_layers = nn.ModuleList([EinsumLinear(domain, codomain, batch_size)])
         else:
             self.lin_layers = nn.ModuleList(
-                [nn.Linear(domain, hidden_size[0])] +
+                [EinsumLinear(domain, hidden_size[0], batch_size)] +
                 [
-                    nn.Linear(hidden_features, hidden_features)
-                    for hidden_features in hidden_size[1:-2]
+                    EinsumLinear(hidden_size[i], hidden_size[i+1], batch_size)
+                    for i in range(len(hidden_size)-1)
                 ]
-                + [nn.Linear(hidden_size[-1], codomain)]
+                + [EinsumLinear(hidden_size[-1], codomain, batch_size)]
             )
 
         if activ_func == "relu":
@@ -27,14 +27,13 @@ class MLPModel(nn.Module):
         elif activ_func == "sine":
             self.non_linearty = torch.sin
             with torch.no_grad():
-                nn.init.uniform_(self.lin_layers[0].weight, -np.sqrt(1 / domain) / omega0_initial,
-                                 np.sqrt(1 / domain) / omega0_initial)
-                nn.init.uniform_(self.lin_layers[0].bias, -np.sqrt(1 / domain) / omega0_initial,
-                                 np.sqrt(1 / domain) / omega0_initial)
+                nn.init.uniform_(self.lin_layers[0].weight, -(1 / domain),
+                                 (1 / domain))
+                nn.init.uniform_(self.lin_layers[0].bias, -(1 / domain),
+                                 (1 / domain))
                 for i in range(len(self.lin_layers[1:])):
                     layer = self.lin_layers[i+1]
                     hidden_features = hidden_size[i]
-                    print(hidden_features)
                     nn.init.uniform_(layer.weight, -np.sqrt(6 / hidden_features) / omega0,
                                      np.sqrt(6 / hidden_features) / omega0)
                     nn.init.uniform_(layer.bias, -np.sqrt(6 / hidden_features) / omega0, np.sqrt(6 / hidden_features) / omega0)

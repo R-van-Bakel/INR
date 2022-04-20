@@ -1,4 +1,5 @@
-from .helper_functions import coordinate_grid, cifar_grid
+from .helper_functions import coordinate_grid, cifar_grid, baseline
 from .gabor_antialiasing import regularize_gabornet
+from .EinsumLinear import EinsumLinear
 
-__all__ = ("coordinate_grid", "cifar_grid", "regularize_gabornet")
+__all__ = ("coordinate_grid", "cifar_grid", "baseline", "regularize_gabornet", "EinsumLinear")

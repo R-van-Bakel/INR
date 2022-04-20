@@ -2,16 +2,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+from .utils import EinsumLinear
 
 
 class RFFEmb(nn.Module):
-    def __init__(self, in_features, out_features, sigma, trainable):
+    def __init__(self, in_features, out_features, sigma, trainable, batch_size=1):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.sigma = sigma
         self.trainable = trainable
-        B = torch.randn(int(out_features/2), in_features)
+        self.batch_size = batch_size
+        B = torch.randn(batch_size, int(out_features / 2), in_features)
         B *= self.sigma*2*math.pi
 
         self.correction = math.sqrt(2)
@@ -26,7 +28,7 @@ class RFFEmb(nn.Module):
         )
 
     def forward(self, x):
-        out = F.linear(x, self.B)
+        out = torch.einsum("c...a,c...ba->c...b", x, self.B)
         out = torch.cat((out.sin(), out.cos()), dim=-1)
         out = out*self.correction  # Will affect backprop when trainable
         return out
@@ -35,7 +37,8 @@ class RFFEmb(nn.Module):
 class RFFNet(nn.Module):
     """ RFF net to parameterise convs """
 
-    def __init__(self, in_features, out_features, hidden_features, sigma=1., activation=nn.ReLU, trainable=False):
+    def __init__(self, in_features, out_features, hidden_features, sigma=1., activation=nn.ReLU, trainable=False,
+                 batch_size=None):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -51,19 +54,20 @@ class RFFNet(nn.Module):
 
         for i in range(len(dims)-1):
             if i == 0:
-                net.append(RFFEmb(dims[i], dims[i+1], sigma=sigma, trainable=trainable))
+                net.append(RFFEmb(dims[i], dims[i+1], sigma=sigma, trainable=trainable, batch_size=batch_size))
             else:
-                net.append(nn.Linear(dims[i], dims[i+1]))
+                net.append(EinsumLinear(dims[i], dims[i+1], batch_size))
                 net.append(activation())
 
-        net.append(nn.Linear(dims[-1], out_features))
+
+        net.append(EinsumLinear(dims[-1], out_features, batch_size))
 
         self.net = nn.Sequential(*net)
         self.init()
 
     def init(self):
         for layer in self.net:
-            if isinstance(layer, nn.Linear):
+            if isinstance(layer, nn.Linear) or isinstance(layer, EinsumLinear):
                 if layer == self.net[-1]:
                     nn.init.kaiming_normal_(layer.weight, nonlinearity="linear")
                 else:
