@@ -6,10 +6,11 @@ from .utils import EinsumLinear
 
 class MLPModel(nn.Module):
     def __init__(self, domain, codomain, hidden_size, batch_size=None, activ_func="relu",
-                 final_non_linearity="identity", omega0=30.0, omega0_initial=1.0):
+                 final_non_linearity="identity", omega0=30.0, omega0_initial=1.0, sigma=1.0):
         super().__init__()
         self.omega0 = omega0
         self.omega0_initial = omega0_initial
+        self.sigma = sigma
         if not hidden_size:
             self.lin_layers = nn.ModuleList([EinsumLinear(domain, codomain, batch_size)])
         else:
@@ -37,6 +38,8 @@ class MLPModel(nn.Module):
                     nn.init.uniform_(layer.weight, -np.sqrt(6 / hidden_features) / omega0,
                                      np.sqrt(6 / hidden_features) / omega0)
                     nn.init.uniform_(layer.bias, -np.sqrt(6 / hidden_features) / omega0, np.sqrt(6 / hidden_features) / omega0)
+        elif activ_func == "gaussian":
+            self.non_linearty = lambda x: torch.exp(-torch.square(x)/(2*np.square(self.sigma)))
 
         if final_non_linearity == "identity":
             self.final_non_linearity = nn.Identity()
@@ -46,10 +49,12 @@ class MLPModel(nn.Module):
     def forward(self, x):
         if self.omega0_initial is not None:
             x = self.omega0_initial * x
-        for layer in self.lin_layers:
-            x = self.non_linearty(x)
-            if self.omega0 is not None:
-                x = self.omega0 * x
-            x = layer(x)
-        x = torch.sigmoid(x)
+        x = self.lin_layers[0](x)
+        if len(self.lin_layers) > 1:
+            for layer in self.lin_layers[1:]:
+                x = self.non_linearty(x)
+                if self.omega0 is not None:
+                    x = self.omega0 * x
+                x = layer(x)
+        x = self.final_non_linearity(x)
         return x
